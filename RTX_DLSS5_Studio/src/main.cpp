@@ -61,6 +61,9 @@ void PrintUsage() {
 }
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow) {
+    // 0. Auto-extract runtime dependencies if missing (zero-dependency standalone release)
+    Application::EnsureRuntimeFilesExtracted();
+
     // Attach to parent console if running from terminal
     FILE* fp = nullptr;
     if (AttachConsole(ATTACH_PARENT_PROCESS)) {

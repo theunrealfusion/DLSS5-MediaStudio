@@ -108,6 +108,7 @@
     <ClInclude Include="src\core\Application.h" />
     <ClInclude Include="src\core\EngineConfig.h" />
     <ClInclude Include="src\core\Logger.h" />
+    <ClInclude Include="src\resource.h" />
     <ClInclude Include="src\security\SecurityManager.h" />
     <ClInclude Include="src\security\MemorySafety.h" />
     <ClInclude Include="src\ngx\NGXUpscaler.h" />
@@ -143,6 +144,11 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="src\render\Shaders.hlsl" />
+    <None Include="app.ico" />
+    <None Include="app.manifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="RTX_DLSS5_Studio.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

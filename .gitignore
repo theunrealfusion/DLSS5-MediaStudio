@@ -13,10 +13,12 @@ include/
 samples/
 NVIDIA_RTX_Video_SDK_License.pdf
 
+
 # ------------------------------------------------------------------------------
 # Build & Compilation Artifacts (Visual Studio / MSBuild / Clang / GCC)
 # ------------------------------------------------------------------------------
 build/
+dist/
 [Bb]in/
 [Oo]bj/
 [Dd]ebug/
