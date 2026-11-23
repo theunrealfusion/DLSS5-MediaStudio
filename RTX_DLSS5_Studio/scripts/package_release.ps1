@@ -1,4 +1,4 @@
-﻿#----------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------
 # File:        package_release.ps1
 # Project:     RTX DLSS-5 Video Studio
 # Purpose:     Automated release packaging, portable zip bundle, and SHA256 generator
