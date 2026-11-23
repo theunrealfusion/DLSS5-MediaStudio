@@ -49,6 +49,7 @@ public:
     bool RunTest(const std::wstring& testFilePath);
 
     static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+    static void EnsureRuntimeFilesExtracted();
 
 private:
     void RenderFrame();

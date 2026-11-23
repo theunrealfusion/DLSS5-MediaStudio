@@ -6,6 +6,7 @@
 
 #include "Application.h"
 #include "Logger.h"
+#include "../resource.h"
 #include "../ngx/NGXTelemetry.h"
 #include <algorithm>
 #include <filesystem>
@@ -85,6 +86,64 @@ LRESULT CALLBACK Application::WndProc(HWND hWnd, UINT message, WPARAM wParam, LP
     return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
+static bool ExtractResourceToFile(int resourceId, const std::wstring& targetPath) {
+    HRSRC hRsrc = FindResourceW(nullptr, MAKEINTRESOURCEW(resourceId), RT_RCDATA);
+    if (!hRsrc) return false;
+    HGLOBAL hGlobal = LoadResource(nullptr, hRsrc);
+    if (!hGlobal) return false;
+    DWORD size = SizeofResource(nullptr, hRsrc);
+    void* pData = LockResource(hGlobal);
+    if (!pData || size == 0) return false;
+
+    HANDLE hFile = CreateFileW(targetPath.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (hFile == INVALID_HANDLE_VALUE) return false;
+
+    DWORD written = 0;
+    BOOL ok = WriteFile(hFile, pData, size, &written, nullptr);
+    CloseHandle(hFile);
+    return (ok && written == size);
+}
+
+void Application::EnsureRuntimeFilesExtracted() {
+    wchar_t exePathBuf[MAX_PATH] = {};
+    std::wstring exeDir = L".";
+    if (GetModuleFileNameW(nullptr, exePathBuf, MAX_PATH)) {
+        std::wstring pathStr(exePathBuf);
+        size_t lastSlash = pathStr.find_last_of(L"\\/");
+        if (lastSlash != std::wstring::npos) {
+            exeDir = pathStr.substr(0, lastSlash);
+        }
+    }
+
+    auto fileExists = [](const std::wstring& p) -> bool {
+        DWORD attrs = GetFileAttributesW(p.c_str());
+        return (attrs != INVALID_FILE_ATTRIBUTES && !(attrs & FILE_ATTRIBUTE_DIRECTORY));
+    };
+
+    std::wstring vsrPath = exeDir + L"\\nvngx_vsr.dll";
+    if (!fileExists(vsrPath)) {
+        if (ExtractResourceToFile(IDR_VSR_DLL, vsrPath)) {
+            LOG_INFO(L"Auto-extracted runtime dependency: " + vsrPath);
+        }
+    }
+
+    std::wstring hdrPath = exeDir + L"\\nvngx_truehdr.dll";
+    if (!fileExists(hdrPath)) {
+        if (ExtractResourceToFile(IDR_TRUEHDR_DLL, hdrPath)) {
+            LOG_INFO(L"Auto-extracted runtime dependency: " + hdrPath);
+        }
+    }
+
+    std::wstring shaderPath = exeDir + L"\\Shaders.hlsl";
+    if (!fileExists(shaderPath)) {
+        if (ExtractResourceToFile(IDR_SHADERS_HLSL, shaderPath)) {
+            LOG_INFO(L"Auto-extracted shader suite: " + shaderPath);
+        }
+    }
+
+    SetDllDirectoryW(exeDir.c_str());
+}
+
 bool Application::Initialize(HINSTANCE hInstance, int nCmdShow, const EngineConfig& config) {
     m_hInstance = hInstance;
     m_config = config;
@@ -95,10 +154,24 @@ bool Application::Initialize(HINSTANCE hInstance, int nCmdShow, const EngineConf
     LOG_INFO("Hardware Target: NVIDIA GeForce RTX 5090 (Blackwell Architecture)");
     LOG_INFO("===============================================================");
 
+    // 0. Auto-extract runtime dependencies if missing (zero-dependency standalone release)
+    EnsureRuntimeFilesExtracted();
+
     // 1. Security Verification: Authenticode checks on NGX DLLs
     if (m_config.EnforceStrictAuthenticode) {
-        std::wstring vsrDllPath = L"nvngx_vsr.dll";
-        std::wstring trueHdrDllPath = L"nvngx_truehdr.dll";
+        wchar_t exePathBuf[MAX_PATH] = {};
+        std::wstring exeDir = L".";
+        if (GetModuleFileNameW(nullptr, exePathBuf, MAX_PATH)) {
+            std::wstring pathStr(exePathBuf);
+            size_t lastSlash = pathStr.find_last_of(L"\\/");
+            if (lastSlash != std::wstring::npos) {
+                exeDir = pathStr.substr(0, lastSlash);
+            }
+        }
+        std::wstring vsrDllPath = exeDir + L"\\nvngx_vsr.dll";
+        std::wstring trueHdrDllPath = exeDir + L"\\nvngx_truehdr.dll";
+        if (GetFileAttributesW(vsrDllPath.c_str()) == INVALID_FILE_ATTRIBUTES) vsrDllPath = L"nvngx_vsr.dll";
+        if (GetFileAttributesW(trueHdrDllPath.c_str()) == INVALID_FILE_ATTRIBUTES) trueHdrDllPath = L"nvngx_truehdr.dll";
         SecurityManager::Instance().VerifyAuthenticodeSignature(vsrDllPath);
         SecurityManager::Instance().VerifyAuthenticodeSignature(trueHdrDllPath);
     }
@@ -109,6 +182,8 @@ bool Application::Initialize(HINSTANCE hInstance, int nCmdShow, const EngineConf
     wc.style = CS_HREDRAW | CS_VREDRAW;
     wc.lpfnWndProc = Application::WndProc;
     wc.hInstance = m_hInstance;
+    wc.hIcon = LoadIcon(m_hInstance, MAKEINTRESOURCE(IDI_APP_ICON));
+    wc.hIconSm = (HICON)LoadImage(m_hInstance, MAKEINTRESOURCE(IDI_APP_ICON), IMAGE_ICON, 16, 16, 0);
     wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
     wc.lpszClassName = L"RTX_DLSS5_Studio_WndClass";
 
@@ -129,6 +204,13 @@ bool Application::Initialize(HINSTANCE hInstance, int nCmdShow, const EngineConf
     if (!m_hWnd) {
         LOG_FATAL("Failed to create application window.");
         return false;
+    }
+
+    if (wc.hIcon) {
+        SendMessage(m_hWnd, WM_SETICON, ICON_BIG, (LPARAM)wc.hIcon);
+    }
+    if (wc.hIconSm) {
+        SendMessage(m_hWnd, WM_SETICON, ICON_SMALL, (LPARAM)wc.hIconSm);
     }
 
     // Enable drag-and-drop of video files

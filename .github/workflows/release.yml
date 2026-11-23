@@ -1,0 +1,128 @@
+name: Release RTX DLSS-5 Studio
+
+#----------------------------------------------------------------------------------
+# Only authorized repository owners (@kshvsharma960 / repo owner) can trigger
+# and publish releases.
+#----------------------------------------------------------------------------------
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release Tag Name (e.g. v1.1.0)'
+        required: true
+        default: 'v1.1.0'
+        type: string
+      release_title:
+        description: 'Release Title'
+        required: false
+        default: 'RTX DLSS-5 Video Studio v1.1.0 - Production Release'
+        type: string
+      is_draft:
+        description: 'Publish as Draft'
+        required: false
+        default: false
+        type: boolean
+      is_prerelease:
+        description: 'Mark as Pre-release'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & Publish Release
+    runs-on: windows-latest
+    # Strict Authorization Guard: Only repository owner or @kshvsharma960 can execute
+    if: github.actor == 'kshvsharma960' || github.actor == github.repository_owner
+
+    steps:
+      - name: Enforce Release Authority (Actor Verification)
+        shell: pwsh
+        run: |
+          $actor = "${{ github.actor }}"
+          $owner = "${{ github.repository_owner }}"
+          Write-Host "=================================================================" -ForegroundColor Cyan
+          Write-Host " Security Check: Verifying Release Operator Authorization" -ForegroundColor Cyan
+          Write-Host " Caller: $actor | Repository Owner: $owner" -ForegroundColor Cyan
+          Write-Host "=================================================================" -ForegroundColor Cyan
+          
+          if ($actor -ne "kshvsharma960" -and $actor -ne $owner) {
+              Write-Error "SECURITY VIOLATION: Unauthorized release trigger by '$actor'. Only @kshvsharma960 / @$owner is authorized to publish releases."
+              exit 1
+          }
+          Write-Host "Authentication Verified: Authorized release manager '$actor'." -ForegroundColor Green
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Setup MSBuild & Visual Studio C++ Environment
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build, Test & Package Release Artifacts
+        shell: pwsh
+        run: |
+          $version = "${{ github.event.inputs.tag_name }}"
+          Write-Host "Building and packaging release deliverables for version $version..." -ForegroundColor Cyan
+          & ".\RTX_DLSS5_Studio\scripts\package_release.ps1" -Version $version
+          if ($LASTEXITCODE -ne 0) {
+              Write-Error "Release packaging script failed with exit code $LASTEXITCODE"
+              exit 1
+          }
+
+      - name: Verify Release Deliverables
+        shell: pwsh
+        run: |
+          $dist = ".\RTX_DLSS5_Studio\dist"
+          $required = @(
+              "$dist\RTX_DLSS5_Studio.exe",
+              "$dist\SHA256SUMS.txt",
+              "$dist\release_notes.md",
+              "$dist\README.txt"
+          )
+          foreach ($f in $required) {
+              if (-not (Test-Path $f)) {
+                  Write-Error "Missing expected release artifact: $f"
+                  exit 1
+              }
+              Write-Host "Verified Artifact: $f ($(Get-Item $f | Select-Object -ExpandProperty Length) bytes)" -ForegroundColor Green
+          }
+          $zips = Get-ChildItem "$dist\*.zip"
+          if ($zips.Count -eq 0) {
+              Write-Error "No portable ZIP bundle found in $dist"
+              exit 1
+          }
+          Write-Host "Verified ZIP Bundle: $($zips[0].FullName) ($($zips[0].Length) bytes)" -ForegroundColor Green
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag_name }}
+          name: ${{ github.event.inputs.release_title || format('RTX DLSS-5 Video Studio {0}', github.event.inputs.tag_name) }}
+          body_path: RTX_DLSS5_Studio/dist/release_notes.md
+          draft: ${{ github.event.inputs.is_draft }}
+          prerelease: ${{ github.event.inputs.is_prerelease }}
+          files: |
+            RTX_DLSS5_Studio/dist/RTX_DLSS5_Studio.exe
+            RTX_DLSS5_Studio/dist/*.zip
+            RTX_DLSS5_Studio/dist/SHA256SUMS.txt
+            RTX_DLSS5_Studio/dist/README.txt
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Output Release Summary
+        shell: pwsh
+        run: |
+          Write-Host "=================================================================" -ForegroundColor Green
+          Write-Host " Release Published Successfully: ${{ github.event.inputs.tag_name }}" -ForegroundColor Green
+          Write-Host " Direct Download: RTX_DLSS5_Studio.exe" -ForegroundColor Green
+          Write-Host " Portable Archive: RTX_DLSS5_Studio-${{ github.event.inputs.tag_name }}-Windows-x64.zip" -ForegroundColor Green
+          Write-Host " Checksums: SHA256SUMS.txt" -ForegroundColor Green
+          Write-Host "=================================================================" -ForegroundColor Green
