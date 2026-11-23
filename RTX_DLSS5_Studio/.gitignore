@@ -1,0 +1,48 @@
+# ==============================================================================
+# RTX DLSS-5 Video Studio - Local Project .gitignore
+# ==============================================================================
+
+# Build outputs
+build/
+bin/
+x64/
+Debug/
+Release/
+
+# Intermediate files
+*.obj
+*.pdb
+*.idb
+*.ipdb
+*.iobj
+*.ilk
+*.tlog
+*.recipe
+*.lastbuildstate
+*.log
+RTX_DLSS5_Studio.log
+
+# Binaries
+*.exe
+*.dll
+*.lib
+*.exp
+
+# Visual Studio files
+.vs/
+*.user
+*.suo
+*.VC.db
+*.VC.opendb
+
+# CMake files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+compile_commands.json
+
+# Heavy / generated test data
+data/*.yuv
+data/test_temp.*
+*.dmp
+*.tmp

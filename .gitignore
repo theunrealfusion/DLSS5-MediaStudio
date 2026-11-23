@@ -1,0 +1,104 @@
+# ==============================================================================
+# RTX DLSS-5 Video Studio - Root .gitignore
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# NVIDIA RTX Video SDK Proprietary Binaries & Upstream SDK Trees
+# (SDK must be obtained separately from NVIDIA Developer under NVIDIA EULA)
+# ------------------------------------------------------------------------------
+bin/
+lib/
+doc/
+include/
+samples/
+NVIDIA_RTX_Video_SDK_License.pdf
+
+# ------------------------------------------------------------------------------
+# Build & Compilation Artifacts (Visual Studio / MSBuild / Clang / GCC)
+# ------------------------------------------------------------------------------
+build/
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+ARM64/
+ARM/
+
+# Intermediate MSVC files
+*.obj
+*.o
+*.pdb
+*.idb
+*.ipdb
+*.iobj
+*.ilk
+*.tlog
+*.recipe
+*.lastbuildstate
+*.log
+RTX_DLSS5_Studio.log
+
+# Compiled libraries & executables
+*.exe
+*.dll
+*.so
+*.dylib
+*.lib
+*.exp
+*.manifest
+
+# ------------------------------------------------------------------------------
+# Visual Studio IDE & Cache
+# ------------------------------------------------------------------------------
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.vssscc
+*.VC.db
+*.VC.opendb
+
+# ------------------------------------------------------------------------------
+# CMake Build Outputs
+# ------------------------------------------------------------------------------
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+compile_commands.json
+CMakeScripts/
+Testing/
+CTestTestfile.cmake
+Makefile
+
+# ------------------------------------------------------------------------------
+# Editor & IDE Settings
+# ------------------------------------------------------------------------------
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+.idea/
+*.swp
+*~
+
+# ------------------------------------------------------------------------------
+# Heavy / Generated Test Data & Raw Media
+# (NV12 YUV is generated on demand via scripts/generate_test_pattern.py)
+# ------------------------------------------------------------------------------
+*.yuv
+*.raw
+RTX_DLSS5_Studio/data/*.yuv
+RTX_DLSS5_Studio/data/test_temp.*
+*.dmp
+*.tmp
+*.bak
+
+# ------------------------------------------------------------------------------
+# Operating System Artifacts
+# ------------------------------------------------------------------------------
+[Tt]humbs.db
+[Dd]esktop.ini
+.DS_Store
