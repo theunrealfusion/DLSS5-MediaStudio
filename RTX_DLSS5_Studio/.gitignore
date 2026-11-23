@@ -5,6 +5,7 @@
 # Build outputs
 build/
 bin/
+dist/
 x64/
 Debug/
 Release/

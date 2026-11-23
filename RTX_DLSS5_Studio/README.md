@@ -73,6 +73,26 @@ Run the automated build script:
 .\scripts\build.ps1 -Configuration Release
 ```
 
+### Packaging Production Release
+Run the automated packaging script to build, package standalone `.exe`, portable `.zip`, and generate SHA-256 checksums:
+```powershell
+.\scripts\package_release.ps1 -Version "v1.1.0"
+```
+Deliverables are output to `dist/`:
+- `RTX_DLSS5_Studio.exe` (Standalone zero-dependency executable)
+- `RTX_DLSS5_Studio-v1.1.0-Windows-x64.zip` (Portable bundle with DLLs and shaders)
+- `SHA256SUMS.txt` (Cryptographic verification checksums)
+- `release_notes.md` (Automated GitHub release notes)
+
+### Automated GitHub Release Workflow (Owner-Only)
+A GitHub Actions workflow is provided at `.github/workflows/release.yml`.
+This workflow is strictly guarded so that **only `@kshvsharma960` (or the repository owner)** can trigger and publish releases.
+
+To run:
+1. Navigate to GitHub -> **Actions** -> **Release RTX DLSS-5 Studio**.
+2. Click **Run workflow**, specify the version tag (e.g. `v1.1.0`), and run.
+3. The standalone `.exe`, portable `.zip`, and checksums will be automatically built, verified, and uploaded to GitHub Releases.
+
 ### Launching
 ```powershell
 # Interactive player opening an MP4 video with realtime slider

@@ -32,6 +32,7 @@ set(SOURCES
     src/export/SnapshotExporter.cpp
     src/export/BatchVideoExporter.cpp
     src/main.cpp
+    RTX_DLSS5_Studio.rc
 )
 
 add_executable(${PROJECT_NAME} WIN32 ${SOURCES})
